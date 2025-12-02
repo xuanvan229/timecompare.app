@@ -1,46 +1,49 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
+  --font-sans: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 html,
 body {
-  @apply bg-slate-50 dark:bg-slate-950;
+  @apply bg-white text-slate-800;
   height: 100%;
   overflow: hidden;
-
-  @media (prefers-color-scheme: dark) {
-    color-scheme: dark;
-  }
 }
 
-/* Custom scrollbar for sidebar */
-aside::-webkit-scrollbar {
+/* Custom scrollbar - Nordic minimal */
+::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
-aside::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: transparent;
 }
 
-aside::-webkit-scrollbar-thumb {
-  background: theme(colors.slate.700);
+::-webkit-scrollbar-thumb {
+  background: theme(colors.slate.300);
   border-radius: 3px;
 }
 
-aside::-webkit-scrollbar-thumb:hover {
-  background: theme(colors.slate.600);
+::-webkit-scrollbar-thumb:hover {
+  background: theme(colors.slate.400);
+}
+
+/* Selection */
+::selection {
+  background: theme(colors.blue.100);
+  color: theme(colors.blue.900);
+}
+
+/* Focus visible */
+:focus-visible {
+  outline: 2px solid theme(colors.blue.500);
+  outline-offset: 2px;
 }
 
 /* Smooth transitions */
 * {
   -webkit-tap-highlight-color: transparent;
-}
-
-/* Selection */
-::selection {
-  background: theme(colors.fuchsia.300);
-  color: theme(colors.slate.900);
 }

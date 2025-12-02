@@ -14,11 +14,11 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-// Default timezones: Ha Noi and Tokyo
+// Default timezones: Ho Chi Minh and Tokyo
 const DEFAULT_TIMEZONES = [
-  TIMEZONE_LIST.find((tz) => tz.id === "vn")!,
-  TIMEZONE_LIST.find((tz) => tz.id === "jst")!,
-];
+  TIMEZONE_LIST.find((tz) => tz.id === "asia-ho-chi-minh")!,
+  TIMEZONE_LIST.find((tz) => tz.id === "asia-tokyo")!,
+].filter(Boolean);
 
 export default function Home() {
   const [selectedTimezones, setSelectedTimezones] = useState<TimezoneInfo[]>(DEFAULT_TIMEZONES);
@@ -33,17 +33,27 @@ export default function Home() {
     setSelectedTimezones((prev) => prev.filter((tz) => tz.id !== id));
   }, []);
 
+  const handleReorderTimezones = useCallback((fromIndex: number, toIndex: number) => {
+    setSelectedTimezones((prev) => {
+      const newList = [...prev];
+      const [moved] = newList.splice(fromIndex, 1);
+      newList.splice(toIndex, 0, moved);
+      return newList;
+    });
+  }, []);
+
   const handleHourChange = useCallback((hour: number) => {
     setSelectedHour(hour);
   }, []);
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="flex h-screen bg-white dark:bg-slate-950">
       <Sidebar
         selectedTimezones={selectedTimezones}
         selectedHour={selectedHour}
         onAddTimezone={handleAddTimezone}
         onRemoveTimezone={handleRemoveTimezone}
+        onReorderTimezones={handleReorderTimezones}
       />
       <TimezoneComparison
         timezones={selectedTimezones}
