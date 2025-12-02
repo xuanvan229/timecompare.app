@@ -9,9 +9,46 @@ import {
 } from "~/lib/timezone-data";
 
 export function meta({}: Route.MetaArgs) {
+  const title = "Timezone Converter & Comparison Tool | World Clock";
+  const description =
+    "Free timezone converter and comparison tool. Easily compare times across multiple cities worldwide. Perfect for scheduling international meetings, remote work coordination, and travel planning.";
+  const url = "https://tz-app.vercel.app"; // Update with your actual domain
+  const image = `${url}/og-image.png`; // Add an OG image to public folder
+
   return [
-    { title: "Timezone Comparison" },
-    { name: "description", content: "Compare times across different timezones" },
+    // Primary Meta Tags
+    { title },
+    { name: "description", content: description },
+    { name: "keywords", content: "timezone converter, world clock, time zone comparison, international time, meeting scheduler, time difference calculator, global time zones" },
+    { name: "author", content: "TZ App" },
+    { name: "robots", content: "index, follow" },
+    { name: "googlebot", content: "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" },
+
+    // Open Graph / Facebook
+    { property: "og:type", content: "website" },
+    { property: "og:url", content: url },
+    { property: "og:title", content: title },
+    { property: "og:description", content: description },
+    { property: "og:image", content: image },
+    { property: "og:image:width", content: "1200" },
+    { property: "og:image:height", content: "630" },
+    { property: "og:site_name", content: "TZ App - Timezone Converter" },
+    { property: "og:locale", content: "en_US" },
+
+    // Twitter Card
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:url", content: url },
+    { name: "twitter:title", content: title },
+    { name: "twitter:description", content: description },
+    { name: "twitter:image", content: image },
+
+    // Additional SEO
+    { name: "theme-color", content: "#0f172a" },
+    { name: "apple-mobile-web-app-title", content: "TZ App" },
+    { name: "application-name", content: "TZ App" },
+
+    // Canonical URL
+    { tagName: "link", rel: "canonical", href: url },
   ];
 }
 
