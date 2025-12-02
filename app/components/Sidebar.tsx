@@ -15,6 +15,8 @@ type SidebarProps = {
   onAddTimezone: (timezone: TimezoneInfo) => void;
   onRemoveTimezone: (id: string) => void;
   onReorderTimezones: (fromIndex: number, toIndex: number) => void;
+  onClose?: () => void;
+  isMobile?: boolean;
 };
 
 type DraggableCardProps = {
@@ -129,6 +131,8 @@ const SidebarContent = ({
   onAddTimezone,
   onRemoveTimezone,
   onReorderTimezones,
+  onClose,
+  isMobile,
 }: SidebarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -175,13 +179,27 @@ const SidebarContent = ({
   };
 
   return (
-    <aside className="w-72 bg-[#FAFBFC] border-r border-slate-200/80 flex flex-col h-full">
+    <aside className="w-80 sm:w-72 bg-[#FAFBFC] border-r border-slate-200/80 flex flex-col h-full shadow-xl lg:shadow-none">
       {/* Header */}
-      <div className="p-6 pb-4">
-        <h1 className="text-xl font-semibold text-slate-800 tracking-tight">
-          Timezones
-        </h1>
-        <p className="text-slate-400 text-sm mt-1">Compare world times</p>
+      <div className="p-6 pb-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-800 tracking-tight">
+            Timezones
+          </h1>
+          <p className="text-slate-400 text-sm mt-1">Compare world times</p>
+        </div>
+        {/* Close button for mobile */}
+        {isMobile && onClose && (
+          <button
+            onClick={onClose}
+            className="lg:hidden p-2 -mr-2 rounded-lg hover:bg-slate-100 transition-colors"
+            aria-label="Close sidebar"
+          >
+            <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Add timezone */}

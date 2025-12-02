@@ -2,6 +2,7 @@ import { useRef, useCallback, useEffect, useState } from "react";
 import {
   type TimezoneInfo,
   formatHour,
+  formatTime,
 } from "~/lib/timezone-data";
 
 type TimezoneComparisonProps = {
@@ -15,6 +16,7 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 type TimeGroup = {
   name: string;
+  shortName: string;
   startHour: number;
   endHour: number;
   labelColor: string;
@@ -23,10 +25,10 @@ type TimeGroup = {
 
 // Clean color palette with more saturation
 const TIME_GROUPS: TimeGroup[] = [
-  { name: "Night", startHour: 0, endHour: 6, labelColor: "bg-slate-700 text-white", blockColor: "bg-slate-500" },
-  { name: "Morning", startHour: 6, endHour: 12, labelColor: "bg-amber-200 text-amber-800", blockColor: "bg-amber-200" },
-  { name: "Afternoon", startHour: 12, endHour: 18, labelColor: "bg-sky-200 text-sky-800", blockColor: "bg-sky-200" },
-  { name: "Evening", startHour: 18, endHour: 24, labelColor: "bg-indigo-400 text-white", blockColor: "bg-indigo-200" },
+  { name: "Night", shortName: "Night", startHour: 0, endHour: 6, labelColor: "bg-slate-700 text-white", blockColor: "bg-slate-500" },
+  { name: "Morning", shortName: "AM", startHour: 6, endHour: 12, labelColor: "bg-amber-200 text-amber-800", blockColor: "bg-amber-200" },
+  { name: "Afternoon", shortName: "PM", startHour: 12, endHour: 18, labelColor: "bg-sky-200 text-sky-800", blockColor: "bg-sky-200" },
+  { name: "Evening", shortName: "Eve", startHour: 18, endHour: 24, labelColor: "bg-indigo-400 text-white", blockColor: "bg-indigo-200" },
 ];
 
 const getTimeGroupForHour = (hour: number): TimeGroup => {
@@ -135,11 +137,11 @@ export const TimezoneComparison = ({
   };
 
   return (
-    <div className="flex-1 bg-white p-8 overflow-auto">
+    <div className="flex-1 bg-white p-4 sm:p-6 lg:p-8 overflow-auto h-full">
       <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="mb-10">
-          <h2 className="text-2xl font-semibold text-slate-800 tracking-tight">
+        {/* Header - Hidden on mobile since we have mobile header */}
+        <div className="mb-6 sm:mb-8 lg:mb-10 hidden lg:block">
+          <h2 className="text-xl sm:text-2xl font-semibold text-slate-800 tracking-tight">
             Time Comparison
           </h2>
           {firstTimezone && (
@@ -149,32 +151,43 @@ export const TimezoneComparison = ({
           )}
         </div>
 
-        {/* Time period labels */}
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-[120px] shrink-0" />
-          <div className="flex-1 flex gap-1">
+        {/* Mobile header info */}
+        {firstTimezone && (
+          <div className="lg:hidden mb-4 text-center">
+            <p className="text-slate-500 text-xs">
+              Based on <span className="font-medium text-blue-600">{firstTimezone.city}</span>
+            </p>
+          </div>
+        )}
+
+        {/* Time period labels - Mobile: full width, Desktop: with left spacing */}
+        <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+          <div className="hidden sm:block sm:w-20 lg:w-[120px] shrink-0" />
+          <div className="flex-1 flex gap-0.5 sm:gap-1">
             {TIME_GROUPS.map((group) => {
               const width = ((group.endHour - group.startHour) / 24) * 100;
               return (
                 <div
                   key={group.name}
-                  className={`h-7 rounded-md flex items-center justify-center text-[10px] font-semibold uppercase tracking-wider ${group.labelColor}`}
+                  className={`h-6 sm:h-7 rounded-md flex items-center justify-center text-[8px] sm:text-[10px] font-semibold uppercase tracking-wider ${group.labelColor}`}
                   style={{ width: `${width}%` }}
                 >
-                  {group.name}
+                  <span className="hidden sm:inline">{group.name}</span>
+                  <span className="sm:hidden">{group.shortName}</span>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Hour markers */}
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-[120px] shrink-0" />
-          <div className="flex-1 flex text-[10px] text-slate-400 font-medium">
+        {/* Hour markers - Mobile: full width, Desktop: with left spacing */}
+        <div className="flex items-center gap-2 sm:gap-3 mb-2">
+          <div className="hidden sm:block sm:w-20 lg:w-[120px] shrink-0" />
+          <div className="flex-1 flex text-[8px] sm:text-[10px] text-slate-400 font-medium">
             {HOURS.map((h) => (
               <div key={h} className="w-[calc(100%/24)] text-center">
-                {h % 6 === 0 ? formatHour(h) : ""}
+                <span className="hidden sm:inline">{h % 6 === 0 ? formatHour(h) : ""}</span>
+                <span className="sm:hidden">{h % 12 === 0 ? h : ""}</span>
               </div>
             ))}
           </div>
@@ -182,73 +195,145 @@ export const TimezoneComparison = ({
 
         {/* Timeline rows */}
         {timezones.length > 0 && (
-          <div className="space-y-2">
+          <div className="space-y-3 sm:space-y-2">
             {timezones.map((tz, index) => {
               const isFirst = index === 0;
+              const tzHourAtSelected = isFirst ? selectedHour : getHourInTimezone(selectedHour, tz);
+              
               return (
-                <div key={tz.id} className="flex items-center gap-3 group">
-                  {/* City label */}
-                  <div className="w-[120px] shrink-0 flex items-center justify-end gap-1.5 pr-1">
-                    <span className={`text-sm font-medium truncate ${isFirst ? "text-blue-600" : "text-slate-600"}`}>
-                      {tz.city}
-                    </span>
-                    <button
-                      onClick={() => onRemoveTimezone(tz.id)}
-                      onKeyDown={(e) => handleRemoveKeyDown(e, tz.id)}
-                      className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-opacity"
-                      aria-label={`Remove ${tz.city}`}
-                      tabIndex={0}
-                    >
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-
-                  {/* Timeline bar */}
-                  <div
-                    ref={index === 0 ? timelineRef : undefined}
-                    className="flex-1 relative"
-                    onMouseDown={handleMouseDown}
-                    onTouchStart={handleTouchStart}
-                    style={{ cursor: isDragging ? "grabbing" : "ew-resize" }}
-                    role="slider"
-                    aria-label={`Time selector for ${tz.city}`}
-                    aria-valuenow={Math.floor(selectedHour)}
-                    aria-valuemin={0}
-                    aria-valuemax={24}
-                    tabIndex={0}
-                  >
-                    <div className={`flex h-10 rounded-lg overflow-hidden border ${isFirst ? "border-blue-200 shadow-sm" : "border-slate-200"}`}>
-                      {HOURS.map((firstTzHour) => {
-                        const tzHour = isFirst ? firstTzHour : getHourInTimezone(firstTzHour, tz);
-                        const timeGroup = getTimeGroupForHour(tzHour);
-
-                        return (
-                          <div
-                            key={firstTzHour}
-                            className={`w-[calc(100%/24)] h-full border-r border-white/50 last:border-r-0 transition-colors ${timeGroup.blockColor}`}
-                            title={`${tz.city}: ${formatHour(tzHour)}`}
-                          />
-                        );
-                      })}
+                <div key={tz.id} className="group">
+                  {/* Desktop layout: horizontal with label on left */}
+                  <div className="hidden sm:flex items-center gap-3">
+                    {/* City label - Desktop */}
+                    <div className="sm:w-20 lg:w-[120px] shrink-0 flex items-center justify-end gap-1.5 pr-1">
+                      <span className={`text-sm font-medium truncate ${isFirst ? "text-blue-600" : "text-slate-600"}`}>
+                        {tz.city}
+                      </span>
+                      <button
+                        onClick={() => onRemoveTimezone(tz.id)}
+                        onKeyDown={(e) => handleRemoveKeyDown(e, tz.id)}
+                        className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-opacity"
+                        aria-label={`Remove ${tz.city}`}
+                        tabIndex={0}
+                      >
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     </div>
 
-                    {/* Time indicator line */}
+                    {/* Timeline bar - Desktop */}
                     <div
-                      className="absolute top-0 bottom-0 w-0.5 pointer-events-none"
-                      style={{
-                        left: `${linePosition}%`,
-                        transform: "translateX(-50%)",
-                      }}
+                      ref={index === 0 ? timelineRef : undefined}
+                      className="flex-1 relative"
+                      onMouseDown={handleMouseDown}
+                      onTouchStart={handleTouchStart}
+                      style={{ cursor: isDragging ? "grabbing" : "ew-resize" }}
+                      role="slider"
+                      aria-label={`Time selector for ${tz.city}`}
+                      aria-valuenow={Math.floor(selectedHour)}
+                      aria-valuemin={0}
+                      aria-valuemax={24}
+                      tabIndex={0}
                     >
-                      <div className="absolute inset-0 bg-blue-500 rounded-full" />
-                      {index === 0 && (
-                        <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-blue-500 border-2 border-white shadow-md" />
-                      )}
-                      {index === timezones.length - 1 && (
-                        <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-blue-500 border-2 border-white shadow-md" />
-                      )}
+                      <div className={`flex h-10 rounded-lg overflow-hidden border ${isFirst ? "border-blue-200 shadow-sm" : "border-slate-200"}`}>
+                        {HOURS.map((firstTzHour) => {
+                          const tzHour = isFirst ? firstTzHour : getHourInTimezone(firstTzHour, tz);
+                          const timeGroup = getTimeGroupForHour(tzHour);
+
+                          return (
+                            <div
+                              key={firstTzHour}
+                              className={`w-[calc(100%/24)] h-full border-r border-white/50 last:border-r-0 transition-colors ${timeGroup.blockColor}`}
+                              title={`${tz.city}: ${formatHour(tzHour)}`}
+                            />
+                          );
+                        })}
+                      </div>
+
+                      {/* Time indicator line - Desktop */}
+                      <div
+                        className="absolute top-0 bottom-0 w-0.5 pointer-events-none"
+                        style={{
+                          left: `${linePosition}%`,
+                          transform: "translateX(-50%)",
+                        }}
+                      >
+                        <div className="absolute inset-0 bg-blue-500 rounded-full" />
+                        {index === 0 && (
+                          <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-blue-500 border-2 border-white shadow-md" />
+                        )}
+                        {index === timezones.length - 1 && (
+                          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-blue-500 border-2 border-white shadow-md" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mobile layout: vertical with label at bottom */}
+                  <div className="sm:hidden">
+                    {/* Timeline bar - Mobile (full width) */}
+                    <div
+                      ref={index === 0 ? timelineRef : undefined}
+                      className="relative"
+                      onMouseDown={handleMouseDown}
+                      onTouchStart={handleTouchStart}
+                      style={{ cursor: isDragging ? "grabbing" : "ew-resize" }}
+                      role="slider"
+                      aria-label={`Time selector for ${tz.city}`}
+                      aria-valuenow={Math.floor(selectedHour)}
+                      aria-valuemin={0}
+                      aria-valuemax={24}
+                      tabIndex={0}
+                    >
+                      <div className={`flex h-10 rounded-lg overflow-hidden border ${isFirst ? "border-blue-200 shadow-sm" : "border-slate-200"}`}>
+                        {HOURS.map((firstTzHour) => {
+                          const tzHour = isFirst ? firstTzHour : getHourInTimezone(firstTzHour, tz);
+                          const timeGroup = getTimeGroupForHour(tzHour);
+
+                          return (
+                            <div
+                              key={firstTzHour}
+                              className={`w-[calc(100%/24)] h-full border-r border-white/50 last:border-r-0 transition-colors ${timeGroup.blockColor}`}
+                              title={`${tz.city}: ${formatHour(tzHour)}`}
+                            />
+                          );
+                        })}
+                      </div>
+
+                      {/* Time indicator line - Mobile */}
+                      <div
+                        className="absolute top-0 bottom-0 w-0.5 pointer-events-none"
+                        style={{
+                          left: `${linePosition}%`,
+                          transform: "translateX(-50%)",
+                        }}
+                      >
+                        <div className="absolute inset-0 bg-blue-500 rounded-full" />
+                        {index === 0 && (
+                          <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-blue-500 border-2 border-white shadow-md" />
+                        )}
+                        {index === timezones.length - 1 && (
+                          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-blue-500 border-2 border-white shadow-md" />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* City label - Mobile (below timeline) */}
+                    <div className="flex items-center justify-between mt-1.5 px-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-medium ${isFirst ? "text-blue-600" : "text-slate-600"}`}>
+                          {tz.city}
+                        </span>
+                        {isFirst && (
+                          <span className="text-[9px] font-bold uppercase bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded">
+                            Base
+                          </span>
+                        )}
+                      </div>
+                      <span className={`text-xs tabular-nums ${isFirst ? "text-blue-600 font-semibold" : "text-slate-500"}`}>
+                        {formatTime(tzHourAtSelected)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -259,21 +344,21 @@ export const TimezoneComparison = ({
 
         {/* Empty state */}
         {timezones.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-24 text-slate-400">
-            <svg className="w-16 h-16 mb-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="flex flex-col items-center justify-center py-16 sm:py-24 text-slate-400">
+            <svg className="w-12 sm:w-16 h-12 sm:h-16 mb-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p className="text-sm font-medium">No timezones selected</p>
-            <p className="text-xs mt-1">Add cities from the sidebar</p>
+            <p className="text-xs mt-1">Tap the menu to add cities</p>
           </div>
         )}
 
         {/* Legend */}
         {timezones.length > 0 && (
-          <div className="mt-10 flex items-center justify-center gap-6 text-xs text-slate-500">
+          <div className="mt-6 sm:mt-10 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-500">
             {TIME_GROUPS.map((group) => (
-              <div key={group.name} className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded ${group.blockColor} border border-slate-200`} />
+              <div key={group.name} className="flex items-center gap-1.5 sm:gap-2">
+                <div className={`w-2.5 sm:w-3 h-2.5 sm:h-3 rounded ${group.blockColor} border border-slate-200`} />
                 <span>{group.name}</span>
               </div>
             ))}
