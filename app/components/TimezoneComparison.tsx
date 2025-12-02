@@ -44,7 +44,8 @@ export const TimezoneComparison = ({
   onHourChange,
   onRemoveTimezone,
 }: TimezoneComparisonProps) => {
-  const timelineRef = useRef<HTMLDivElement>(null);
+  const desktopTimelineRef = useRef<HTMLDivElement>(null);
+  const mobileTimelineRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const firstTimezone = timezones[0];
@@ -55,15 +56,31 @@ export const TimezoneComparison = ({
     return (firstTzHour + offsetDiff + 24) % 24;
   };
 
+  // Get the visible timeline ref based on which one has dimensions
+  const getActiveTimelineRef = useCallback(() => {
+    // Check desktop ref first
+    if (desktopTimelineRef.current) {
+      const rect = desktopTimelineRef.current.getBoundingClientRect();
+      if (rect.width > 0) return desktopTimelineRef.current;
+    }
+    // Fall back to mobile ref
+    if (mobileTimelineRef.current) {
+      const rect = mobileTimelineRef.current.getBoundingClientRect();
+      if (rect.width > 0) return mobileTimelineRef.current;
+    }
+    return null;
+  }, []);
+
   const calculateHourFromPosition = useCallback(
     (clientX: number) => {
-      if (!timelineRef.current) return selectedHour;
-      const rect = timelineRef.current.getBoundingClientRect();
+      const timelineEl = getActiveTimelineRef();
+      if (!timelineEl) return selectedHour;
+      const rect = timelineEl.getBoundingClientRect();
       const x = clientX - rect.left;
       const percentage = Math.max(0, Math.min(1, x / rect.width));
       return percentage * 24;
     },
-    [selectedHour]
+    [selectedHour, getActiveTimelineRef]
   );
 
   const handleMouseDown = useCallback(
@@ -92,7 +109,6 @@ export const TimezoneComparison = ({
 
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
-      e.preventDefault();
       setIsDragging(true);
       const touch = e.touches[0];
       const hour = calculateHourFromPosition(touch.clientX);
@@ -224,7 +240,7 @@ export const TimezoneComparison = ({
 
                     {/* Timeline bar - Desktop */}
                     <div
-                      ref={index === 0 ? timelineRef : undefined}
+                      ref={isFirst ? desktopTimelineRef : undefined}
                       className="flex-1 relative"
                       onMouseDown={handleMouseDown}
                       onTouchStart={handleTouchStart}
@@ -274,8 +290,8 @@ export const TimezoneComparison = ({
                   <div className="sm:hidden">
                     {/* Timeline bar - Mobile (full width) */}
                     <div
-                      ref={index === 0 ? timelineRef : undefined}
-                      className="relative"
+                      ref={isFirst ? mobileTimelineRef : undefined}
+                      className="relative touch-none"
                       onMouseDown={handleMouseDown}
                       onTouchStart={handleTouchStart}
                       style={{ cursor: isDragging ? "grabbing" : "ew-resize" }}
