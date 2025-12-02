@@ -404,3 +404,9 @@ export const getCurrentUTCHour = (): number => {
   const now = new Date();
   return now.getUTCHours() + now.getUTCMinutes() / 60;
 };
+
+// Get current hour in a specific timezone (by offset)
+export const getCurrentHourInTimezone = (offset: number): number => {
+  const utcHour = getCurrentUTCHour();
+  return ((utcHour + offset) % 24 + 24) % 24;
+};

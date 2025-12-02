@@ -5,6 +5,7 @@ import { TimezoneComparison } from "~/components/TimezoneComparison";
 import {
   type TimezoneInfo,
   TIMEZONE_LIST,
+  getCurrentHourInTimezone,
 } from "~/lib/timezone-data";
 
 export function meta({}: Route.MetaArgs) {
@@ -20,9 +21,18 @@ const DEFAULT_TIMEZONES = [
   TIMEZONE_LIST.find((tz) => tz.id === "asia-tokyo")!,
 ].filter(Boolean);
 
+// Get current hour in the first default timezone
+const getInitialHour = () => {
+  const firstTz = DEFAULT_TIMEZONES[0];
+  if (firstTz) {
+    return getCurrentHourInTimezone(firstTz.offset);
+  }
+  return 12; // fallback
+};
+
 export default function Home() {
   const [selectedTimezones, setSelectedTimezones] = useState<TimezoneInfo[]>(DEFAULT_TIMEZONES);
-  const [selectedHour, setSelectedHour] = useState<number>(12);
+  const [selectedHour, setSelectedHour] = useState<number>(getInitialHour);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleAddTimezone = useCallback((timezone: TimezoneInfo) => {
